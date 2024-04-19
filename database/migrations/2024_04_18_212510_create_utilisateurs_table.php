@@ -1,0 +1,46 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+
+     public function up(): void
+     {
+         Schema::create('utilisateurs', function (Blueprint $table) {
+             $table->bigIncrements('id');
+             $table->string('nom');
+             $table->string('prenom');
+             $table->string('email')->unique();
+             $table->string('role');
+             $table->string('password');
+             $table->timestamps();
+         });
+     
+         // Exemple de cryptage du mot de passe pour un utilisateur
+         $password = bcrypt('1234');
+     
+         // Enregistrez l'utilisateur dans la base de données avec le mot de passe crypté
+         DB::table('utilisateurs')->insert([
+             'nom' => 'kawtar',
+             'prenom' => 'kawtar',
+             'email' => 'kawtar@gmail.com',
+             'role' => 'admin',
+             'password' => $password,
+             'created_at' => now(),
+             'updated_at' => now()
+         ]);
+     }
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('utilisateurs');
+    }
+};
