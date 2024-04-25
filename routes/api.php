@@ -2,8 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\api\UtilisateurController;
-use App\Http\Controllers\api\VerificationController;
+use App\Http\Controllers\AuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -14,15 +13,12 @@ use App\Http\Controllers\api\VerificationController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/afficher', [AuthController::class, 'afficher']);
+Route::put('/update/{id}',[AuthController::class, 'update']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
 });
-
-Route::middleware('auth:sanctum')->get('/posts', 'api/PostController@index');
-
-
-Route::post('/login', [UtilisateurController::class, 'login']);
-
-//Route::post('/verifier', [VerificationController::class, 'verifierValeur']);
-Route::post('/verifier', [VerificationController::class, 'verifierValeur']); 
