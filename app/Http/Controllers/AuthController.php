@@ -73,49 +73,46 @@ class AuthController extends Controller {
         $users = User::all();
         return response()->json($users);
     }
-    /*public function afficher(){
-        $users = User::select('name', 'email', 'password')->get();
-    
-        // Decrypt the passwords
-        foreach ($users as $user) {
-            $user->password = decrypt($user->password);
-        }
-    
-        return response()->json(['users' => $users]);
-    }*/
-    public function update(UpdateUserRequest $request, $id)
-    {
-        $user = User::findOrFail($id);
 
-        $data = $request->validated();
+    // Update an existing user
+ public function update(UpdateUserRequest $request) {
+    // First, validate the incoming request data
+    $data = $request->validated();
 
-        $user->name = $data['name'];
+    // Find the currently authenticated user
+    $user = $request->user();
 
+    // Update user information with validated data
+    $user->update([
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'password' => isset($data['password']) ? Hash::make($data['password']) : $user->password,
+        'role' => $data['role'],
+    ]);
 
+    // Return the updated user info with a success response
+    return response()->json([
+        'user' => new UserResource($user),
+        'message' => 'User information updated successfully.'
+    ]);
+}
+// Delete the current user
+public function destroy(Request $request) {
+    // Retrieve the currently authenticated user
+    $user = $request->user();
 
-        $user->email = $data['email'];
+    // Delete the user
+    $user->delete();
 
-        $user->role = $data['role'];
+    // Clear the auth cookie
+    $cookie = cookie()->forget('token');
 
-        if ($request->filled('password')) {
+    // Provide a response notifying the user of the deletion
+    return response()->json([
+        'message' => 'Your account has been deleted successfully'
+    ])->withCookie($cookie);
+}
 
-            $user->password = Hash::make($data['password']);
-
-        }
-
-        $user->save();
-
-
-        return response()->json([
-
-            'message' => 'User updated successfully!',
-
-        ]);
-
-    }
-    
-    
-    
     
      
 }
