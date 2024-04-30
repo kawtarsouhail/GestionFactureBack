@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class BonLivraison extends Model
 {
-    protected $primaryKey = 'NumBonLiv';
+   // protected $primaryKey = 'NumBonLiv';
 
     protected $fillable = [
         'NumBonLiv', 'idClient', 'dateBonLiv', 'TypeValidation'
     ];
+
+
 }

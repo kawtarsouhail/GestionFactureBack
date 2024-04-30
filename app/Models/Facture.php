@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Facture extends Model
 {
-    protected $primaryKey = 'NumFacture';
+    //protected $primaryKey = 'NumFacture';
 
     protected $fillable = [
+        'id',
         'NumFacture',
         'MontantHT',
         'DateFacture',
@@ -18,13 +19,13 @@ class Facture extends Model
         'MontantTTC',
         'idEmetteur',
         'idClient',
+        'idBonLiv',
         'TypeContrat',
         'EtabliPar',
         'EtaPayement',
         'ModeReg',
-        'NumBonLiv',
-        'NumRemise',
-        'NumCheque',
+        'idRemise',
+        'idCheque',
     ];
 
     public function Emetteur()
@@ -36,19 +37,18 @@ class Facture extends Model
     {
         return $this->belongsTo('App\Models\Client', 'idClient');
     }
-
-    public function bonLivraison()
+    public function BonLivraison()
     {
-        return $this->hasOne(BonLivraison::class, 'NumBonLiv');
+        return $this->belongsTo('App\Models\BonLivraison', 'idBonLiv');
     }
 
     public function remise()
     {
-        return $this->hasOne(Remise::class, 'NumRemise');
+        return $this->belongsTo('App\Models\Remise', 'idRemise');
     }
     public function Cheque()
     {
-        return $this->belongsTo('App\Models\Cheque', 'NumCheque');
+        return $this->belongsTo('App\Models\Cheque', 'idCheque');
     }
     
 }

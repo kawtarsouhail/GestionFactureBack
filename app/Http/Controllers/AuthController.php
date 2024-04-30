@@ -9,6 +9,8 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+
 
 class AuthController extends Controller {
     // register a new user method
@@ -20,7 +22,7 @@ class AuthController extends Controller {
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => $data['role'],
+            //'role' => $data['role'],
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -47,11 +49,12 @@ class AuthController extends Controller {
         // Créer un jeton d'authentification pour l'utilisateur
         $token = $user->createToken('auth_token')->plainTextToken;
     
-        // Retourner les détails de l'utilisateur et le jeton d'authentification
-        return response()->json([
-            'user' => new UserResource($user),
-            'token' => $token
-        ]);
+            return response()->json([
+                'user' => new UserResource($user),
+                'token' => $token,
+                'role' => $user->role  
+            ]);
+
     }
     
     // logout a user method
@@ -74,45 +77,44 @@ class AuthController extends Controller {
         return response()->json($users);
     }
 
-    // Update an existing user
- public function update(UpdateUserRequest $request) {
-    // First, validate the incoming request data
-    $data = $request->validated();
-
-    // Find the currently authenticated user
-    $user = $request->user();
-
-    // Update user information with validated data
-    $user->update([
-        'name' => $data['name'],
-        'email' => $data['email'],
-        'password' => isset($data['password']) ? Hash::make($data['password']) : $user->password,
-        'role' => $data['role'],
-    ]);
-
-    // Return the updated user info with a success response
-    return response()->json([
-        'user' => new UserResource($user),
-        'message' => 'User information updated successfully.'
-    ]);
-}
-// Delete the current user
-public function destroy(Request $request) {
-    // Retrieve the currently authenticated user
-    $user = $request->user();
-
-    // Delete the user
-    $user->delete();
-
-    // Clear the auth cookie
-    $cookie = cookie()->forget('token');
-
-    // Provide a response notifying the user of the deletion
-    return response()->json([
-        'message' => 'Your account has been deleted successfully'
-    ])->withCookie($cookie);
-}
-
+  
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'required|string',
+            'password' => [
+                'nullable',
+                'string',
+                Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised(),
+                'confirmed',
+            ]
+        ]);
+    
+        if (isset($validatedData['password'])) {
+            $validatedData['password'] = Hash::make($validatedData['password']);
+        }
+    
+        $user->update($validatedData);
+    
+        return response()->json(['message' => 'User updated successfully', 'user' => new UserResource($user)]);
+    }
+    
+    public function destroy($id) {
+        // Récupération de l'utilisateur par ID
+        $user = User::findOrFail($id);
+    
+        // Suppression de l'utilisateur
+        $user->delete();
+    
+        // Retourner une réponse informant de la suppression
+        return response()->json([
+            'message' => 'User account has been deleted successfully'
+        ]);
+    }
+        
     
      
 }

@@ -17,15 +17,19 @@ use App\Http\Controllers\FactureController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/afficher', [AuthController::class, 'afficher']);
-//Route::put('/update/{id}',[AuthController::class, 'update']);
 
 Route::post('/enregistrerFacture', [FactureController::class, 'store']);
 Route::get('/getFacture', [FactureController::class, 'getDonnees']);
 
 
+
+Route::put('/factures/{id}', [FactureController::class, 'update']); 
+Route::delete('/deleteFacture/{id}', [FactureController::class, 'delete']); 
+
+Route::put('/modifier/{id}', [AuthController::class, 'update']);
+Route::delete('/supprimer/{id}', [AuthController::class, 'destroy']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
-    Route::put('/update/{id}', [AuthController::class, 'update']);
-    Route::delete('/delete', [AuthController::class, 'destroy']);
 });

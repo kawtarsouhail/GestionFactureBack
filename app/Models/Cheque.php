@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cheque extends Model
 {
-    protected $primaryKey = 'NumCheque';
+   // protected $primaryKey = 'NumCheque';
     protected $fillable = [
         'NumCheque',
-        'NumRemise'
+        'idRemise'
     ];
 
 }

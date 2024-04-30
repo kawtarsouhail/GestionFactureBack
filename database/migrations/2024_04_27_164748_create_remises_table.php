@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('remises', function (Blueprint $table) {
-            $table->string('NumRemise')->primary();
+            $table->id();
+            $table->string('NumRemise');
             $table->float('MontantEnc');
             $table->timestamps();
 

@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bon_livraisons', function (Blueprint $table) {
-            $table->string('NumBonLiv')->primary();
+            $table->id();
+            $table->string('NumBonLiv');
             $table->bigInteger('idClient')->unsigned(); 
             $table->date('dateBonLiv');
             $table->string('TypeValidation');
