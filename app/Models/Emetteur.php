@@ -10,4 +10,8 @@ class Emetteur extends Model
     protected $fillable = [
         'NomEmetteur'
     ];
+    public function facture()
+    {
+        return $this->hasMany('App\Models\Facture', 'idEmetteur');
+    }
 }

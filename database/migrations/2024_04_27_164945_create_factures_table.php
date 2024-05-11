@@ -24,7 +24,8 @@ return new class extends Migration
             $table->string('TypeContrat');
             $table->string('EtabliPar');
             $table->string('EtaPayement');
-            $table->string('ModeReg');            
+            $table->string('ModeReg');  
+            $table->float('MontantEnc');          
             $table->foreign('idEmetteur')->references('id')->on('emetteurs'); 
             //$table->foreign('idAvance')->references('id')->on('avances'); 
             $table->bigInteger('idClient')->unsigned();

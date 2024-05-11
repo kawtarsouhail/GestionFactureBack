@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('avances', function (Blueprint $table) {
+        Schema::create('reliquats', function (Blueprint $table) {
             $table->id();
-            $table->float('montant');
-            $table->date('dateAvc');
             $table->timestamps();
         });
     }
@@ -24,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('avances');
+        Schema::dropIfExists('reliquats');
     }
 };

@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('remises', function (Blueprint $table) {
             $table->id();
             $table->string('NumRemise');
-            $table->float('MontantEnc');
             $table->timestamps();
 
         });

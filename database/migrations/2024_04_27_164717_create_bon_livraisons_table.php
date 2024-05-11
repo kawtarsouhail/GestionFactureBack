@@ -17,6 +17,8 @@ return new class extends Migration
             $table->bigInteger('idClient')->unsigned(); 
             $table->date('dateBonLiv');
             $table->string('TypeValidation');
+            $table->date('dateValidation');
+            $table->string('NumBonCommande')->nullable();
             $table->timestamps();
         
             $table->foreign('idClient')->references('id')->on('clients');
@@ -30,4 +32,10 @@ return new class extends Migration
     {
         Schema::dropIfExists('bon_livraisons');
     }
+    // public function down()
+    // {
+    //     Schema::table('bon_livraisons', function (Blueprint $table) {
+    //         $table->string('NumBonCommande')->change();
+    //     });
+    // }
 };

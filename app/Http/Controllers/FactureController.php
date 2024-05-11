@@ -16,16 +16,23 @@ use Illuminate\Http\Request;
 
 class FactureController extends Controller
 {
+
+ /****************** cree facture******************* */
 public function store(Request $request)
 {
+        // Vérification de la permission
+     if (!auth()->user()->can('create_factures')) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
     // Validate the request data
     $validatedData = $request->validate([
         'NumFacture' => 'required|string|unique:factures',
         'MontantHT' => 'required|numeric',
         'DateFacture' => 'required|date',
         'Taux' => 'required|numeric',
-        'TVA' => 'required|numeric',
-        'MontantTTC' => 'required|numeric',
+        // 'TVA' => 'required|numeric',
+        // 'MontantTTC' => 'required|numeric',
         'TypeContrat' => 'required|string',
         'EtabliPar' => 'required|string',
         'EtaPayement' => 'required|string',
@@ -35,8 +42,10 @@ public function store(Request $request)
         'NumBonLiv' => 'required|string|unique:bon_livraisons',
         'dateBonLiv' => 'required|date',
         'TypeValidation' => 'required|string',
-        'NumRemise' => 'nullable|string|unique:remises',
-        'MontantEnc' => 'nullable|numeric',
+        'dateValidation' => 'required|date',
+        'NumBonCommande' => 'nullable|date',
+        'NumRemise' => 'nullable|string',
+        'MontantEnc' => 'required|numeric',
         'NumCheque' => 'nullable|string|unique:cheques'
     ]);
 
@@ -51,16 +60,17 @@ public function store(Request $request)
             'NumBonLiv' => $validatedData['NumBonLiv'],
             'idClient' => $client->id,
             'dateBonLiv' => $validatedData['dateBonLiv'],
-            'TypeValidation' => $validatedData['TypeValidation']
+            'TypeValidation' => $validatedData['TypeValidation'],
+            'dateValidation' => $validatedData['dateValidation'],
+            'NumBonCommande' => $validatedData['NumBonCommande']
         ]);
         $idBonLivraison = $bonLivraison->id;
         $remise = null;
         $cheque = null;
 
-        if (!empty($validatedData['NumRemise']) && !empty($validatedData['MontantEnc'])) {
+        if (!empty($validatedData['NumRemise'])) {
             $remise = Remise::create([
                 'NumRemise' => $validatedData['NumRemise'],
-                'MontantEnc' => $validatedData['MontantEnc'],
             ]);
         }
 
@@ -70,24 +80,26 @@ public function store(Request $request)
                 'idRemise' => $remise->id,
             ]);
         }
-
+        
         $facture = Facture::create([
             'NumFacture' => $validatedData['NumFacture'],
             'MontantHT' => $validatedData['MontantHT'],
             'DateFacture' => $validatedData['DateFacture'],
             'Taux' => $validatedData['Taux'],
-            'TVA' => $validatedData['TVA'],
-            'MontantTTC' => $validatedData['MontantTTC'],
+            'MontantTTC' => $validatedData['MontantHT'] + $validatedData['MontantHT'] * $validatedData['Taux'] / 100,
+            'TVA' => $validatedData['MontantHT'] * $validatedData['Taux'] / 100,
             'idEmetteur' => $emetteur->id,
             'idClient' => $client->id,
             'TypeContrat' => $validatedData['TypeContrat'],
             'EtabliPar' => $validatedData['EtabliPar'],
             'EtaPayement' => $validatedData['EtaPayement'],
             'ModeReg' => $validatedData['ModeReg'],
-            'idBonLiv' => $idBonLivraison, // Utilisez l'ID du bon de livraison
+            'MontantEnc' => $validatedData['MontantEnc'],
+            'idBonLiv' => $idBonLivraison, 
             'idRemise' => $remise ? $remise->id : null,
             'idCheque' => $cheque ? $cheque->id : null,
         ]);
+        
 
         DB::commit();
         return response()->json(['message' => 'Facture enregistrée avec succès'], 201);
@@ -97,61 +109,129 @@ public function store(Request $request)
     }
 }
 
+     /****************** afficher les factures ****************** */
+
+ public function getDonnees()
+    {
+        // Vérification de la permission
+        if (!auth()->user()->can('view_all_factures')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+        $donnees = Facture::with([
+            'Emetteur:id,NomEmetteur', 
+            'Client:id,NomClient', 
+            'Remise:id,NumRemise', 
+            'BonLivraison:id,NumBonLiv,dateBonLiv,TypeValidation,dateValidation,NumBonCommande',
+            'Cheque:id,NumCheque',
+        ])->get([
+            'id','NumFacture', 'MontantHT', 'MontantEnc','DateFacture', 'Taux', 'TVA', 'MontantTTC', 
+            'TypeContrat', 'EtabliPar', 'EtaPayement', 'ModeReg', 
+            'idClient', 'idEmetteur', 'idBonLiv', 'idCheque', 'idRemise'
+        ]);
 
 
-
-        public function getDonnees()
-        {
-            $donnees = Facture::with([
-                'Emetteur:id,NomEmetteur', 
-                'Client:id,NomClient', 
-                'Remise:id,NumRemise,MontantEnc', 
-                'BonLivraison:id,NumBonLiv,dateBonLiv,TypeValidation',
-                'Cheque:id,NumCheque',
-            ])->get([
-                'id','NumFacture', 'MontantHT', 'DateFacture', 'Taux', 'TVA', 'MontantTTC', 
-                'TypeContrat', 'EtabliPar', 'EtaPayement', 'ModeReg', 
-                'idClient', 'idEmetteur', 'idBonLiv', 'idCheque', 'idRemise'
-            ]);
-
-
-            return response()->json(['donnees' => $donnees], 200);
-        }
+        return response()->json(['donnees' => $donnees], 200);
+    }
         
 
+
+        /****************** update facture******************* */
         public function update(Request $request, $id)
         {
+            // Vérification de la permission
+        if (!auth()->user()->can('edit_factures')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
             $facture = Facture::findOrFail($id); // Trouver la facture par ID, ou échouer si non trouvée
-        
+
             // Validation des données entrantes
             $validatedData = $request->validate([
-                'NumFacture' => 'required|string|unique:factures,NumFacture,' . $id,
-                'MontantHT' => 'required|numeric',
-                'DateFacture' => 'required|date',
-                'Taux' => 'required|numeric',
-                'TVA' => 'required|numeric',
-                'MontantTTC' => 'required|numeric',
-                'TypeContrat' => 'required|string',
-                'EtabliPar' => 'required|string',
-                'EtaPayement' => 'required|string',
-                'ModeReg' => 'required|string',
-                // Assurez-vous de valider les autres champs importants
+                'MontantEnc' => 'required|numeric',
             ]);
-        
+
+            // Sauvegarde de l'ancien montant
+            $ancienMontant = $facture->MontantEnc;
+
             // Mise à jour de la facture avec les données validées
             $facture->update($validatedData);
-        
-            return response()->json(['message' => 'Facture mise à jour avec succès'], 200);
-        }
-        public function delete($id)
-        {
-            $facture = Facture::findOrFail($id); // Trouver la facture par son ID
-            
-            $facture->delete(); // Supprimer la facture
-        
-            return response()->json(['message' => 'Facture supprimée avec succès'], 200);
-        }
 
+            // Retourner uniquement le montant modifié
+            $nouveauMontant = $facture->MontantEnc;
+
+            return response()->json([
+                'message' => 'Facture mise à jour avec succès',
+                'ancienMontant' => $ancienMontant,
+                'nouveauMontant' => $nouveauMontant
+            ], 200);
+    }
+
+
+    /****************** Delete facture******************* */
+
+
+     public function delete($id)
+        {
+                // Vérification de la permission
+        if (!auth()->user()->can('delete_factures')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            DB::beginTransaction();
+            try {
+                $bonLivraison = BonLivraison::findOrFail($id);
+                $factures = Facture::where('idBonLiv', $id)->get();
+        
+                foreach ($factures as $facture) {
+                    // Delete associated Cheques
+                    if ($facture->idCheque) {
+                        $cheque = Cheque::where('id', $facture->idCheque)->first();
+                        if ($cheque) {
+                            $facture->idCheque=null;
+                            $facture->save();
+                            $cheque->delete();
+                            
+
+                        }
+                    }
+        
+                    // Delete associated Remises
+                    if ($facture->idRemise) {
+                        $remise = Remise::where('id', $facture->idRemise)->first();
+                        if ($remise) {
+                            $facture->idRemise=null;
+                            $facture->save();
+                            $remiseCheques = Cheque::where('idRemise', $remise->id)->get();
+                            foreach ($remiseCheques as $cheque) {
+                                $cheque->delete();
+                            }
+                            $remise->delete();
+                        }
+                    }
+        
+                    // Delete the Facture
+                    $facture->delete();
+                }
+                  
+                        // Delete Bon de Livraison
+                $bonLivraison->delete();
+
+                // Delete Client
+                $client = Client::where('id', $bonLivraison->idClient)->first();
+                if ($client) {
+                    $client->delete();
+                }
+        
+                DB::commit();
+                return response()->json(['message' => 'All associated records successfully deleted'], 200);
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json(['message' => 'Error during deletion', 'error' => $e->getMessage()], 500);
+            }
+        }
+        
+        
       
 
 }    

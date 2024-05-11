@@ -10,32 +10,55 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB; 
+
+use App\Enums\UserRole;
 
 
 class AuthController extends Controller {
-    // register a new user method
-    public function register(RegisterRequest $request) {
 
-        $data = $request->validated();
+    //cree users
+    public function register(RegisterRequest $request)
+    {
+     
+        // Vérification de la permission
+        if (!auth()->user()->can('create_users')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+            }
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            //'role' => $data['role'],
-        ]);
+        DB::beginTransaction(); // Start transaction
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        try {
+            // Create user
+            $user = User::create([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+                //'role' => $request->input('role'),
+                'password' => bcrypt($request->input('password')),
+            ]);
 
-        $cookie = cookie('token', $token, 60 * 24); // 1 day
+            // Assign role
+            $roleName = $request->input('role');
+            if (UserRole::isValidRole($roleName)) {
+                $user->assignRole($roleName); // Automatically assigns permissions associated with the role
+            } else {
+                throw new Exception("Invalid role specified: $roleName");
+            }
 
-        return response()->json([
-            'user' => new UserResource($user),
-        ])->withCookie($cookie);
+            DB::commit(); // Commit transaction
+            return response()->json($user, 201); // Return success with user data
+        } catch (Exception $e) {
+            DB::rollBack(); // Roll back the transaction on error
+            return response()->json(['error' => $e->getMessage()], 500); // Return error
+        }
     }
+
+    
 
     // login a user method
     public function login(LoginRequest $request) {
+
         $data = $request->validated();
     
         $user = User::where('email', $data['email'])->first();
@@ -52,7 +75,6 @@ class AuthController extends Controller {
             return response()->json([
                 'user' => new UserResource($user),
                 'token' => $token,
-                'role' => $user->role  
             ]);
 
     }
@@ -70,17 +92,46 @@ class AuthController extends Controller {
 
     // get the authenticated user method
     public function user(Request $request) {
-        return new UserResource($request->user());
+        $user = $request->user();
+        // S'assurer que l'utilisateur a au moins un rôle attribué
+        $role = $user->roles()->first();
+        // Assurer que le rôle existe avant d'essayer d'accéder à son nom
+        $roleName = $role ? $role->name : 'No role assigned';  
+        return response()->json([
+            'user' => new UserResource($user),
+            'role' => $roleName
+        ]);
     }
-    public function afficher(){
-        $users = User::all();
-        return response()->json($users);
-    }
+    
+   //affiche users
+    public function afficher() {
 
-  
+         // Vérification de la permission
+     if (!auth()->user()->can('view_all_users')) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $users = User::with('roles')->get();  // Eager-load roles
+        return response()->json($users->map(function ($user) {
+            $userResource = new UserResource($user);
+            $roles = $user->getRoleNames();  // getRoleNames returns an array of role names
+            return [
+                'user' => $userResource,
+                'roles' => $roles // make sure it's an array, consistent with how single user roles are sent
+            ];
+        }));
+    }
+    
+
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+    
+        // Vérification de la permission
+        if (!auth()->user()->can('edit_users')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+    
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -88,10 +139,25 @@ class AuthController extends Controller {
             'password' => [
                 'nullable',
                 'string',
-                Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised(),
+                'min:8',
                 'confirmed',
             ]
         ]);
+    
+        // Vérifier si un nouveau rôle est spécifié
+        if ($request->has('role')) {
+            $roleName = $request->input('role');
+            if (UserRole::isValidRole($roleName)) {
+                // Révoquer l'ancien rôle de l'utilisateur s'il en a un
+                if ($user->roles->count() > 0) {
+                    $user->removeRole($user->roles->first());
+                }
+                // Assigner le nouveau rôle
+                $user->assignRole($roleName);
+            } else {
+                throw new Exception("Invalid role specified: $roleName");
+            }
+        }
     
         if (isset($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['password']);
@@ -99,10 +165,18 @@ class AuthController extends Controller {
     
         $user->update($validatedData);
     
-        return response()->json(['message' => 'User updated successfully', 'user' => new UserResource($user)]);
+        return response()->json(['message' => 'User updated successfully', 'user' => new UserResource($user), 'role' => $roleName]);
     }
     
+
+    //supprimer user
     public function destroy($id) {
+
+        // Vérification de la permission
+        if (!auth()->user()->can('delete_users')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+            
         // Récupération de l'utilisateur par ID
         $user = User::findOrFail($id);
     
@@ -115,6 +189,5 @@ class AuthController extends Controller {
         ]);
     }
         
-    
      
 }

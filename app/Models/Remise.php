@@ -10,5 +10,16 @@ class Remise extends Model
    
    // protected $primaryKey = 'NumRemise';
 
-    protected $fillable = ['NumRemise', 'MontantEnc'];
+    protected $fillable = ['NumRemise'];
+
+    public function cheque()
+    {
+        return $this->hasMany('App\Models\Cheque', 'idRemise');
+    }
+    public function Facture()
+    {
+        return $this->hasOne('App\Models\Facture', 'idRemise');
+    }
+
+
 }

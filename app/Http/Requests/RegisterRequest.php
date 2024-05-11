@@ -22,11 +22,11 @@ class RegisterRequest extends FormRequest {
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'role' => 'required|string|max:255',
+           // 'role' => 'required|string|max:255',
             'password' => [
                 'required',
                 'string',
-                Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised(),
+                'min:8',
                 'confirmed',
             ]
         ];

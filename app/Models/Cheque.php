@@ -12,5 +12,14 @@ class Cheque extends Model
         'NumCheque',
         'idRemise'
     ];
+    public function remise()
+    {
+        return $this->belongsTo('App\Models\Remise', 'idRemise');
+    }
+    public function Facture()
+{
+    return $this->hasOne('App\Models\Facture', 'idCheque');
+}
+
 
 }

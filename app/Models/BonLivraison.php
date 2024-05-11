@@ -10,8 +10,12 @@ class BonLivraison extends Model
    // protected $primaryKey = 'NumBonLiv';
 
     protected $fillable = [
-        'NumBonLiv', 'idClient', 'dateBonLiv', 'TypeValidation'
+        'NumBonLiv', 'idClient', 'dateBonLiv', 'TypeValidation','dateValidation','NumBonCommande'
     ];
+    public function Facture()
+{
+    return $this->hasOne('App\Models\Facture', 'idBonLiv');
+}
 
 
 }

@@ -26,6 +26,8 @@ class Facture extends Model
         'ModeReg',
         'idRemise',
         'idCheque',
+        'MontantEnc',
+
     ];
 
     public function Emetteur()
