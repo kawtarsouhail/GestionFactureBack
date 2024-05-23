@@ -18,7 +18,11 @@ class Remise extends Model
     }
     public function Facture()
     {
-        return $this->hasOne('App\Models\Facture', 'idRemise');
+        return $this->hasMany('App\Models\Facture', 'idRemise');
+    }
+    public function Reliquat()
+    {
+        return $this->hasMany('App\Models\Reliquat', 'idRemise');
     }
 
 

@@ -162,7 +162,7 @@ class AuthController extends Controller {
         if (isset($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['password']);
         }
-    
+        
         $user->update($validatedData);
     
         return response()->json(['message' => 'User updated successfully', 'user' => new UserResource($user), 'role' => $roleName]);

@@ -13,12 +13,6 @@ class RoleSeeder extends Seeder
     {
 
       
-          // Crée un utilisateur avec un rôle spécifique
-          User::create([
-            'name' => 'Kawtar Souhail',
-            'email' => 'KawtarSouhail@gmail.com',
-            'password' => Hash::make('Kawtar@2004!'),
-        ])->assignRole(UserRole::SUPER_ADMIN);
         
         foreach (UserRole::getRoles() as $role) {
             // Vérifier si le rôle existe déjà dans la table
@@ -37,15 +31,18 @@ class RoleSeeder extends Seeder
             if ($role === UserRole::SUPER_ADMIN) {
                 $permissions = [
                     'edit_users', 'delete_users', 'view_all_users', 'create_users',
-                    'edit_factures', 'delete_factures', 'create_factures', 'view_all_factures'
+                    'edit_factures', 'delete_factures', 'create_factures', 'view_all_factures',
+                    'view_facture_by_num','view_reliquat','delete_reliquat','edit_reliquat','create_reliquat'
+
                 ];
             } elseif ($role === UserRole::ADMIN) {
                 $permissions = [
-                    'edit_factures', 'delete_factures', 'create_factures', 'view_all_factures'
+                    'edit_factures', 'delete_factures', 'create_factures', 'view_all_factures',
+                    'view_facture_by_num','view_reliquat','delete_reliquat','edit_reliquat','create_reliquat'
                 ];
             } elseif ($role === UserRole::USER) {
                 $permissions = [
-                    'view_all_factures'
+                    'view_all_factures','view_facture_by_num','view_reliquat'
                 ];
             }
 
@@ -71,7 +68,13 @@ class RoleSeeder extends Seeder
                 }
             }
         }
-
+         // Crée un utilisateur avec un rôle spécifique
+         User::create([
+            'name' => 'Kawtar Souhail',
+            'email' => 'KawtarSouhail@gmail.com',
+            'password' => Hash::make('Kawtar@2004!'),
+        ])->assignRole(UserRole::SUPER_ADMIN);
+        
 
     }
 }

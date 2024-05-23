@@ -27,6 +27,7 @@ class Facture extends Model
         'idRemise',
         'idCheque',
         'MontantEnc',
+        'DatePayement',
 
     ];
 
@@ -52,5 +53,8 @@ class Facture extends Model
     {
         return $this->belongsTo('App\Models\Cheque', 'idCheque');
     }
-    
+    public function Reliquat()
+    {
+        return $this->hasOne('App\Models\Reliquat', 'idFacture');
+    }
 }

@@ -17,9 +17,13 @@ class Cheque extends Model
         return $this->belongsTo('App\Models\Remise', 'idRemise');
     }
     public function Facture()
-{
-    return $this->hasOne('App\Models\Facture', 'idCheque');
-}
+    {
+        return $this->hasOne('App\Models\Facture', 'idCheque');
+    }
+    public function Reliquat()
+    {
+        return $this->hasOne('App\Models\Reliquat', 'idCheque');
+    }
 
 
 }

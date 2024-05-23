@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
     DB::beginTransaction();
 
     try {
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $emetteur = Emetteur::create(['NomEmetteur' => 'Emetteur ' . $i]);
             $client = Client::create(['NomClient' => 'Client ' . $i]);
 
@@ -31,7 +31,9 @@ class DatabaseSeeder extends Seeder
                 'NumBonLiv' => 'bona' . $i,
                 'idClient' => $client->id,
                 'dateBonLiv' => now(),
-                'TypeValidation' => 'Type ' . $i
+                'TypeValidation' => 'Type ' . $i,
+                'dateValidation' => now()
+
             ]);
 
             // Randomly choosing payment status
@@ -59,6 +61,7 @@ class DatabaseSeeder extends Seeder
                 'NumFacture' => 'f' . $i,
                 'MontantHT' => rand(1000, 10000),
                 'DateFacture' => now(),
+                'DatePayement' => now(),
                 'Taux' => rand(0, 1),
                 'TVA' => rand(500, 2000),
                 'MontantTTC' => rand(1100, 1200),

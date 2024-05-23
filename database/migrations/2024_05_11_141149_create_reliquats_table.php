@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('reliquats', function (Blueprint $table) {
             $table->id();
+            $table->float('MontantEnc');
+            $table->date('dateReliquat');
+            $table->String('ModeReg');
+            $table->bigInteger('idFacture')->unsigned();
+            $table->unsignedBigInteger('idRemise')->nullable();
+            $table->unsignedBigInteger('idCheque')->nullable();
             $table->timestamps();
+            $table->foreign('idFacture')->references('id')->on('factures') ->onDelete('cascade');
+            $table->foreign('idRemise')->references('id')->on('remises');
+            $table->foreign('idCheque')->references('id')->on('cheques') ;
         });
     }
 

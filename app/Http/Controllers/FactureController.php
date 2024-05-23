@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB; 
-
+use Illuminate\Support\Facades\DB;
 use App\Models\BonLivraison;
 use App\Models\Cheque;
 use App\Models\Client;
@@ -31,8 +30,7 @@ public function store(Request $request)
         'MontantHT' => 'required|numeric',
         'DateFacture' => 'required|date',
         'Taux' => 'required|numeric',
-        // 'TVA' => 'required|numeric',
-        // 'MontantTTC' => 'required|numeric',
+        'DatePayement' => 'required|date',
         'TypeContrat' => 'required|string',
         'EtabliPar' => 'required|string',
         'EtaPayement' => 'required|string',
@@ -43,7 +41,7 @@ public function store(Request $request)
         'dateBonLiv' => 'required|date',
         'TypeValidation' => 'required|string',
         'dateValidation' => 'required|date',
-        'NumBonCommande' => 'nullable|date',
+        'NumBonCommande' => 'nullable|string',
         'NumRemise' => 'nullable|string',
         'MontantEnc' => 'required|numeric',
         'NumCheque' => 'nullable|string|unique:cheques'
@@ -94,7 +92,8 @@ public function store(Request $request)
             'EtabliPar' => $validatedData['EtabliPar'],
             'EtaPayement' => $validatedData['EtaPayement'],
             'ModeReg' => $validatedData['ModeReg'],
-            'MontantEnc' => $validatedData['MontantEnc'],
+            'MontantEnc' => $validatedData['MontantEnc'], 
+            'DatePayement' => $validatedData['DatePayement'],
             'idBonLiv' => $idBonLivraison, 
             'idRemise' => $remise ? $remise->id : null,
             'idCheque' => $cheque ? $cheque->id : null,
@@ -126,7 +125,7 @@ public function store(Request $request)
             'Cheque:id,NumCheque',
         ])->get([
             'id','NumFacture', 'MontantHT', 'MontantEnc','DateFacture', 'Taux', 'TVA', 'MontantTTC', 
-            'TypeContrat', 'EtabliPar', 'EtaPayement', 'ModeReg', 
+            'TypeContrat', 'EtabliPar', 'EtaPayement', 'ModeReg','DatePayement',
             'idClient', 'idEmetteur', 'idBonLiv', 'idCheque', 'idRemise'
         ]);
 
@@ -173,7 +172,7 @@ public function store(Request $request)
 
      public function delete($id)
         {
-                // Vérification de la permission
+        // Vérification de la permission
         if (!auth()->user()->can('delete_factures')) {
             return response()->json(['message' => 'Unauthorized'], 403);
             }
@@ -232,7 +231,34 @@ public function store(Request $request)
         }
         
         
-      
+        public function getFactureByNumero($Num)
+        {
+       // Vérification de la permission
+        if (!auth()->user()->can('view_facture_by_num')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            // Recherche de la facture dans la base de données
+            $facture = Facture::with([
+                'Emetteur:id,NomEmetteur', 
+                'Client:id,NomClient', 
+                'Remise:id,NumRemise', 
+                'BonLivraison:id,NumBonLiv,idClient,dateBonLiv,TypeValidation',
+                'Cheque:id,NumCheque,idRemise',
+            ])->where('NumFacture', $Num)->first([
+                'id','NumFacture', 'MontantHT', 'DateFacture', 'Taux', 'TVA', 'MontantTTC', 
+                'TypeContrat', 'EtabliPar', 'EtaPayement', 'ModeReg', 'MontantEnc',
+                'idClient', 'idEmetteur', 'idBonLiv', 'idCheque', 'idRemise','DatePayement'
+            ]);
+            
+            // Vérification si la facture existe
+            if ($facture) {
+                // Retourner les données de la facture
+                return response()->json($facture);
+            } else {
+                // Retourner une réponse si la facture n'est pas trouvée
+                return response()->json(['error' => 'Facture non trouvée'], 404);
+            }
+        }
 
 }    
 
